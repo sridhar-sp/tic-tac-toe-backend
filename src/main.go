@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -123,6 +124,15 @@ func printCells(gameBoard [][]Element) {
 	}
 }
 
+func getPort() string {
+	var port = "3000"
+	var portFromConfig, isConfigPresent = os.LookupEnv("PORT")
+	if isConfigPresent {
+		port = portFromConfig
+	}
+	return port
+}
+
 // Router methods starts here
 
 func onRenderCell(responseWriter http.ResponseWriter, req *http.Request) {
@@ -200,7 +210,8 @@ func onPlayControlClick(responseWriter http.ResponseWriter, req *http.Request) {
 // Router methods ends here
 
 func main() {
-	log.Println("Starting tic-tac-toe service")
+	port := getPort()
+	log.Println("Starting tic-tac-toe service at port ", port)
 
 	loadAllAssets()
 
@@ -211,5 +222,5 @@ func main() {
 	http.Handle("/renderPlayControls", http.HandlerFunc(onRenderPlayControl))
 	http.Handle("/clickPlayControls", http.HandlerFunc(onPlayControlClick))
 
-	http.ListenAndServe(":2021", nil)
+	http.ListenAndServe(":"+port, nil)
 }
