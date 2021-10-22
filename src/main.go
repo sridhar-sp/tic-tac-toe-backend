@@ -3,18 +3,25 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
+
+	svg "github.com/ajstarks/svgo"
+	"github.com/sridhar-sp/tic-tac-toe-backend/src/assets"
 )
 
 const REDIRECT_URL = "https://github.com/sridhar-sp/tic-tac-toe"
 
-const ROW_SZIE = 3
-const COLUMN_SZIE = 3
-const BOARD_SIZE = ROW_SZIE * COLUMN_SZIE
+const ROW_SIZE = 3
+const COLUMN_SIZE = 3
+const BOARD_SIZE = ROW_SIZE * COLUMN_SIZE
+
+var random = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 type Element int
 
@@ -22,25 +29,12 @@ const EMPTY_CELL Element = 0
 const CROSS_CELL Element = 1
 const NOUGHT_CELL Element = 2
 
-var board [][]Element = getEmptyBoard(ROW_SZIE, COLUMN_SZIE)
+var board [][]Element = getEmptyBoard(ROW_SIZE, COLUMN_SIZE)
 
-var emptyBoxSVG []byte
-var crossImageSVG []byte
-var noughtImageSVG []byte
-var computerStartButtonSVG []byte
-var restartButtonSVG []byte
-
-func loadAllAssets() {
-	log.Println("Caching all the required asset files")
-	emptyBoxSVG = fileToBytes("./assets/rect_empty.svg")
-	crossImageSVG = fileToBytes("./assets/rect_x.svg")
-	noughtImageSVG = fileToBytes("./assets/rect_o.svg")
-	computerStartButtonSVG = fileToBytes("./assets/computer_start_button.svg")
-	restartButtonSVG = fileToBytes("./assets/restart_button.svg")
-}
+var activities = []string{"* Game is yet to begin"}
 
 func resetBoard() {
-	board = getEmptyBoard(ROW_SZIE, COLUMN_SZIE)
+	board = getEmptyBoard(ROW_SIZE, COLUMN_SIZE)
 }
 
 func parseAndValidateCellIndexFromRequest(req *http.Request) (int, error) {
@@ -73,19 +67,13 @@ func writeEmptyTextResponse(responseWriter http.ResponseWriter) {
 }
 
 func getRowAndColumnIndex(cellIndex int) (int, int) {
-	rowIndex := cellIndex / ROW_SZIE
-	colIndex := cellIndex % COLUMN_SZIE
+	rowIndex := cellIndex / ROW_SIZE
+	colIndex := cellIndex % COLUMN_SIZE
 	return rowIndex, colIndex
 }
 
-func fileToBytes(filePath string) []byte {
-	log.Println("Reading ", filePath)
-	bytes, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		log.Println("Error parsing ", filePath)
-		return make([]byte, 0)
-	}
-	return bytes
+func getFlatIndexFromRowAndColumn(row int, column int, rowSize int, columnSize int) int {
+	return row*rowSize + column
 }
 
 func isGameStarted(gameBoard [][]Element) bool {
@@ -112,6 +100,37 @@ func getEmptyBoard(rowSize int, columSize int) [][]Element {
 	return boardData
 }
 
+func getEmptyCellIndexes(gameBoard [][]Element) []int {
+	emptyIndexes := make([]int, 0, BOARD_SIZE)
+
+	rowSize := len(gameBoard)
+	for row := 0; row < rowSize; row++ {
+		columnSize := len(gameBoard[row])
+		for column := 0; column < columnSize; column++ {
+			if gameBoard[row][column] == EMPTY_CELL {
+				emptyIndexes = append(emptyIndexes, getFlatIndexFromRowAndColumn(row, column, rowSize, columnSize))
+			}
+		}
+	}
+
+	return emptyIndexes
+}
+
+func playComputerMove(gameBoard [][]Element) (int, int) {
+	emptyCellIndexs := getEmptyCellIndexes(gameBoard)
+	availableSpaces := len(emptyCellIndexs)
+	if availableSpaces == 0 {
+		log.Println("No empty space for computer to make a move")
+		return -1, -1
+	}
+
+	indexToSelect := random.Intn(availableSpaces)
+
+	rowIndex, colIndex := getRowAndColumnIndex(emptyCellIndexs[indexToSelect])
+	gameBoard[rowIndex][colIndex] = NOUGHT_CELL
+	return rowIndex, colIndex
+}
+
 // Todo remove this method once initial devlopment is over
 func printCells(gameBoard [][]Element) {
 
@@ -131,6 +150,59 @@ func getPort() string {
 		port = portFromConfig
 	}
 	return port
+}
+
+func writeTextResponseAsImage(textLines []string, responseWriter http.ResponseWriter) {
+	responseWriter.Header().Set("Content-Type", "image/svg+xml")
+	drawTextLines(textLines, 18, 8, "#58A6FF", "start", responseWriter)
+}
+
+func drawTextLines(textLines []string, fontSize int, lineSpace int, textColor string, textAlign string, writer io.Writer) {
+	var longestTextLength = -1
+	for _, text := range textLines {
+		currentTextLength := len(text)
+		if currentTextLength > longestTextLength {
+			longestTextLength = currentTextLength
+		}
+	}
+
+	width := int(float32(longestTextLength) * (float32(fontSize) / float32(2)))
+	height := fontSize*len(textLines) + (len(textLines) * lineSpace)
+	canvas := svg.New(writer)
+	canvas.Start(width, height)
+
+	// canvas.Rect(0, 0, width, height, "fill:#238636")
+
+	var textStartX = 0
+	switch textAlign {
+	case "start":
+		textStartX = 0
+	case "middle":
+		textStartX = width / 2
+	case "end":
+		textStartX = width
+	}
+
+	style := fmt.Sprintf("font-size:%dpx;fill:%s;text-anchor:%s", fontSize, textColor, textAlign)
+	var textStartY = fontSize - (fontSize / 5)
+	for _, text := range textLines {
+		canvas.Text(textStartX, textStartY, text, style)
+		textStartY = textStartY + fontSize + lineSpace
+	}
+
+	canvas.End()
+}
+
+func updateActivities(text string) {
+	activities = append(activities, text)
+}
+
+func clearActivities() {
+	activities = []string{}
+}
+
+func getActivities() []string {
+	return activities
 }
 
 // Router methods starts here
@@ -158,13 +230,13 @@ func onRenderCell(responseWriter http.ResponseWriter, req *http.Request) {
 	switch cellValue := board[rowIndex][colIndex]; cellValue {
 	case CROSS_CELL:
 		log.Println("Render cross cell")
-		responseWriter.Write(crossImageSVG)
+		responseWriter.Write(assetManager.GetSvg(assets.CrossImage))
 	case NOUGHT_CELL:
 		log.Println("Render nougt cell")
-		responseWriter.Write(noughtImageSVG)
+		responseWriter.Write(assetManager.GetSvg(assets.NoughtImage))
 	default:
 		log.Println("Render empty cell")
-		responseWriter.Write(emptyBoxSVG)
+		responseWriter.Write(assetManager.GetSvg(assets.EmptyBox))
 	}
 }
 
@@ -182,6 +254,10 @@ func onClickCell(responseWriter http.ResponseWriter, req *http.Request) {
 	rowIndex, colIndex := getRowAndColumnIndex(cellIndex)
 
 	board[rowIndex][colIndex] = CROSS_CELL
+	computerMoveRowIndex, computerMoveColIndex := playComputerMove(board)
+
+	updateActivities(fmt.Sprintf("* Player X clicked cell [%d,%d]", rowIndex, colIndex))
+	updateActivities(fmt.Sprintf("* Player O clicked cell [%d,%d]", computerMoveRowIndex, computerMoveColIndex))
 
 	http.Redirect(responseWriter, req, REDIRECT_URL, http.StatusMovedPermanently)
 }
@@ -191,9 +267,9 @@ func onRenderPlayControl(responseWriter http.ResponseWriter, req *http.Request) 
 	writeCommonHeaders(responseWriter)
 
 	if isGameStarted(board) {
-		responseWriter.Write(restartButtonSVG)
+		responseWriter.Write(assetManager.GetSvg(assets.RestartButton))
 	} else {
-		responseWriter.Write(computerStartButtonSVG)
+		responseWriter.Write(assetManager.GetSvg(assets.ComputerStartButton))
 	}
 }
 
@@ -214,21 +290,27 @@ func onPlayControlClick(responseWriter http.ResponseWriter, req *http.Request) {
 	http.Redirect(responseWriter, req, REDIRECT_URL, http.StatusMovedPermanently)
 }
 
+func renderActivities(responseWriter http.ResponseWriter, req *http.Request) {
+	log.Println("renderActivities function called")
+	writeCommonHeaders(responseWriter)
+
+	writeTextResponseAsImage(activities, responseWriter)
+}
+
 // Router methods ends here
+
+var assetManager = assets.New()
 
 func main() {
 	port := getPort()
 	log.Println("Starting tic-tac-toe service at port ", port)
-
-	loadAllAssets()
-
-	printCells(board)
 
 	http.Handle("/", http.HandlerFunc(onHome))
 	http.Handle("/renderCell", http.HandlerFunc(onRenderCell))
 	http.Handle("/clickCell", http.HandlerFunc(onClickCell))
 	http.Handle("/renderPlayControls", http.HandlerFunc(onRenderPlayControl))
 	http.Handle("/clickPlayControls", http.HandlerFunc(onPlayControlClick))
+	http.Handle("/renderActivities", http.HandlerFunc(renderActivities))
 
 	http.ListenAndServe(":"+port, nil)
 }
