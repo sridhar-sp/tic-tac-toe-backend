@@ -135,6 +135,13 @@ func getPort() string {
 
 // Router methods starts here
 
+func onHome(responseWriter http.ResponseWriter, req *http.Request) {
+	log.Println("onHome function called")
+
+	responseWriter.Header().Set("Content-Type", "text/html")
+	responseWriter.Write([]byte("Welcome to tic-tac-toe. application is running at port " + getPort()))
+}
+
 func onRenderCell(responseWriter http.ResponseWriter, req *http.Request) {
 	log.Println("onRenderCell function called")
 	writeCommonHeaders(responseWriter)
@@ -217,6 +224,7 @@ func main() {
 
 	printCells(board)
 
+	http.Handle("/", http.HandlerFunc(onHome))
 	http.Handle("/renderCell", http.HandlerFunc(onRenderCell))
 	http.Handle("/clickCell", http.HandlerFunc(onClickCell))
 	http.Handle("/renderPlayControls", http.HandlerFunc(onRenderPlayControl))
