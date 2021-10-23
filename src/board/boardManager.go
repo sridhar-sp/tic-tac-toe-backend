@@ -15,6 +15,16 @@ const (
 	NOUGHT_CELL Element = 2
 )
 
+type PlayStatus string
+
+const (
+	YET_TO_START PlayStatus = "Yet to start"
+	PLAYING      PlayStatus = "Playing"
+	DRAW         PlayStatus = "Draw"
+	PLAYER_X_WON PlayStatus = "Player x won"
+	PLAYER_O_WON PlayStatus = "Player o won"
+)
+
 type Board [][]Element
 
 type boardRepo struct {
@@ -22,6 +32,7 @@ type boardRepo struct {
 	rowSize      int
 	columnSize   int
 	totalMoves   int
+	playStaus    PlayStatus
 	randomizer   *rand.Rand
 }
 
@@ -34,7 +45,14 @@ type BoardManger interface {
 	ResetBoard()
 	Mark(row int, column int, element Element)
 	IsGameStarted() bool
+	IsPlayerXWon() bool
+	IsPlayerOWon() bool
+	IsDraw() bool
+	IsGameFinished() bool
 	PlayComputerMove()
+	GetGamePlayStatus() PlayStatus
+	isWonBy(row int, column int, element Element) bool
+	findGamPlayeStatus(rowIndex int, columnIndex int, element Element) PlayStatus
 	PrintBoard()
 	getEmptyCellIndexes() []Element
 	getFlatIndexFromRowAndColumn() int
@@ -47,6 +65,7 @@ func New(rowSize int, columnSize int) *boardRepo {
 		rowSize:      rowSize,
 		columnSize:   columnSize,
 		totalMoves:   0,
+		playStaus:    YET_TO_START,
 		randomizer:   rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
@@ -70,25 +89,43 @@ func (b *boardRepo) GetBoard() Board {
 func (b *boardRepo) ResetBoard() {
 	b.boardContent = getEmptyBoard(b.rowSize, b.columnSize)
 	b.totalMoves = 0
+	b.playStaus = YET_TO_START
 }
 
 func (b *boardRepo) Mark(row int, column int, element Element) {
 	b.boardContent[row][column] = element
 	b.totalMoves++
+	b.playStaus = b.findGamPlayeStatus(row, column, element)
+}
+
+func (b *boardRepo) GetGamePlayStatus() PlayStatus {
+	return b.playStaus
 }
 
 func (b *boardRepo) IsGameStarted() bool {
-	for row := 0; row < b.rowSize; row++ {
-		for column := 0; column < b.columnSize; column++ {
-			if b.GetCell(row, column) != EMPTY_CELL {
-				return true
-			}
-		}
+	return b.playStaus != YET_TO_START
+}
+
+func (b *boardRepo) IsGameFinished() bool {
+	if b.playStaus == DRAW || b.playStaus == PLAYER_X_WON || b.playStaus == PLAYER_O_WON {
+		return true
 	}
 	return false
 }
 
-func (b boardRepo) PlayComputerMove(element Element) (int, int) {
+func (b *boardRepo) IsPlayerXWon() bool {
+	return b.playStaus == PLAYER_X_WON
+}
+
+func (b *boardRepo) IsPlayerOWon() bool {
+	return b.playStaus == PLAYER_O_WON
+}
+
+func (b *boardRepo) IsDraw() bool {
+	return b.playStaus == DRAW
+}
+
+func (b *boardRepo) PlayComputerMove(element Element) (int, int) {
 	emptyCellIndexs := b.getEmptyCellIndexes()
 	availableSpaces := len(emptyCellIndexs)
 
@@ -136,6 +173,71 @@ func (b boardRepo) PrintBoard() {
 			fmt.Printf(" ")
 		}
 		fmt.Println("")
+	}
+}
+
+func (b boardRepo) findGamPlayeStatus(rowIndex int, columnIndex int, element Element) PlayStatus {
+
+	//Check vertical
+	for i := 0; i < b.rowSize; i++ {
+		if b.GetCell(i, columnIndex) != element {
+			break
+		}
+		if i == b.rowSize-1 {
+			return elementToPlayStatus(element)
+		}
+	}
+
+	//Check horizontal
+	for i := 0; i < b.columnSize; i++ {
+		if b.GetCell(rowIndex, i) != element {
+			break
+		}
+		if i == b.columnSize-1 {
+			return elementToPlayStatus(element)
+		}
+	}
+
+	//Check dignoal (left to right)
+	if rowIndex == columnIndex {
+		for i := 0; i < b.rowSize; i++ {
+			if b.GetCell(i, i) != element {
+				break
+			}
+			if i == b.rowSize-1 {
+				return elementToPlayStatus(element)
+			}
+		}
+	}
+
+	//Check dignoal (right to left)
+	if rowIndex+columnIndex == b.rowSize-1 {
+		for r := 0; r < b.rowSize; r++ {
+			c := b.rowSize - 1 - r
+			if b.GetCell(r, c) != element {
+				break
+			}
+			if r == b.rowSize-1 {
+				return elementToPlayStatus(element)
+			}
+		}
+	}
+
+	if b.totalMoves == b.GetBoardSize() {
+		return DRAW
+	}
+
+	return PLAYING
+}
+
+func elementToPlayStatus(element Element) PlayStatus {
+	switch element {
+	case CROSS_CELL:
+		return PLAYER_X_WON
+	case NOUGHT_CELL:
+		return PLAYER_O_WON
+	default:
+		return PLAYING
 	}
 }
 

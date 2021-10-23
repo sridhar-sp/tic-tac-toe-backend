@@ -166,16 +166,30 @@ func onClickCell(responseWriter http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	rowIndex, colIndex := boardManager.GetRowAndColumnFromFlatIndex(cellIndex)
-	if boardManager.IsEmptyCell(rowIndex, colIndex) {
-		boardManager.Mark(rowIndex, colIndex, board.CROSS_CELL)
-		computerMoveRowIndex, computerMoveColIndex := boardManager.PlayComputerMove(board.NOUGHT_CELL)
+	if !boardManager.IsGameFinished() {
+		rowIndex, colIndex := boardManager.GetRowAndColumnFromFlatIndex(cellIndex)
+		if boardManager.IsEmptyCell(rowIndex, colIndex) {
+			boardManager.Mark(rowIndex, colIndex, board.CROSS_CELL)
+			updateActivities(fmt.Sprintf("* Player 'X' clicked cell [%d , %d]", rowIndex, colIndex))
 
-		// updateActivities(fmt.Sprintf("* Player 'X' clicked cell [%d , %d]", rowIndex, colIndex))
-		// updateActivities(fmt.Sprintf("* Player 'O' clicked cell [%d , %d]", computerMoveRowIndex, computerMoveColIndex))
-		updateActivities(fmt.Sprintf("* Player 'X' clicked cell [%d , %d] and player 'O' clicked cell [%d , %d]", rowIndex, colIndex, computerMoveRowIndex, computerMoveColIndex))
+			if boardManager.IsPlayerXWon() {
+				updateActivities("* Player 'X' won")
+			} else if boardManager.IsDraw() {
+				updateActivities("* Game draw")
+			} else {
+				computerMoveRowIndex, computerMoveColIndex := boardManager.PlayComputerMove(board.NOUGHT_CELL)
+				updateActivities(fmt.Sprintf("* Player 'O' clicked cell [%d , %d]", computerMoveRowIndex, computerMoveColIndex))
+				if boardManager.IsPlayerOWon() {
+					updateActivities("* Player 'O' won")
+				} else if boardManager.IsDraw() {
+					updateActivities("* Game draw")
+				}
+			}
+		} else {
+			updateActivities(fmt.Sprintf("* Player 'X' can't select cell [%d , %d], the cell is already selected", rowIndex, colIndex))
+		}
 	} else {
-		updateActivities(fmt.Sprintf("* Player 'X' can't select cell [%d , %d], the cell is already selected", rowIndex, colIndex))
+		updateActivities("* Game over. Please restart to play the game again")
 	}
 
 	http.Redirect(responseWriter, req, REDIRECT_URL, http.StatusMovedPermanently)
