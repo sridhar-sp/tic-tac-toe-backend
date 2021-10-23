@@ -141,14 +141,23 @@ func onRenderCell(responseWriter http.ResponseWriter, req *http.Request) {
 	}
 
 	rowIndex, colIndex := boardManager.GetRowAndColumnFromFlatIndex(cellIndex)
+	isCellSelected := boardManager.IsCellSelectedByWinner(rowIndex, colIndex)
 
 	switch cellValue := boardManager.GetCell(rowIndex, colIndex); cellValue {
 	case board.CROSS_CELL:
 		log.Println("Render cross cell")
-		responseWriter.Write(assetManager.GetSvg(assets.CrossImage))
+		if isCellSelected {
+			responseWriter.Write(assetManager.GetSvg(assets.SelectedCrossImage))
+		} else {
+			responseWriter.Write(assetManager.GetSvg(assets.CrossImage))
+		}
 	case board.NOUGHT_CELL:
 		log.Println("Render nougt cell")
-		responseWriter.Write(assetManager.GetSvg(assets.NoughtImage))
+		if isCellSelected {
+			responseWriter.Write(assetManager.GetSvg(assets.SelectedNoughtImage))
+		} else {
+			responseWriter.Write(assetManager.GetSvg(assets.NoughtImage))
+		}
 	default:
 		log.Println("Render empty cell")
 		responseWriter.Write(assetManager.GetSvg(assets.EmptyBox))

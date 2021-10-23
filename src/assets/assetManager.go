@@ -8,7 +8,9 @@ import (
 type svgImageAssets struct {
 	emptyBoxSVG            []byte
 	crossImageSVG          []byte
+	selectedCrossImageSVG  []byte
 	noughtImageSVG         []byte
+	selectedNoughtImageSVG []byte
 	computerStartButtonSVG []byte
 	restartButtonSVG       []byte
 }
@@ -18,7 +20,9 @@ type AssetId int
 const (
 	EmptyBox AssetId = iota
 	CrossImage
+	SelectedCrossImage
 	NoughtImage
+	SelectedNoughtImage
 	ComputerStartButton
 	RestartButton
 )
@@ -33,7 +37,9 @@ func New() svgImageAssets {
 	return svgImageAssets{
 		emptyBoxSVG:            fileToBytes("./assets/rect_empty.svg"),
 		crossImageSVG:          fileToBytes("./assets/rect_x.svg"),
+		selectedCrossImageSVG:  fileToBytes("./assets/rect_x_selected.svg"),
 		noughtImageSVG:         fileToBytes("./assets/rect_o.svg"),
+		selectedNoughtImageSVG: fileToBytes("./assets/rect_o_selected.svg"),
 		computerStartButtonSVG: fileToBytes("./assets/computer_start_button.svg"),
 		restartButtonSVG:       fileToBytes("./assets/restart_button.svg"),
 	}
@@ -45,8 +51,12 @@ func (s svgImageAssets) GetSvg(assetId AssetId) []byte {
 		return s.emptyBoxSVG
 	case CrossImage:
 		return s.crossImageSVG
+	case SelectedCrossImage:
+		return s.selectedCrossImageSVG
 	case NoughtImage:
 		return s.noughtImageSVG
+	case SelectedNoughtImage:
+		return s.selectedNoughtImageSVG
 	case ComputerStartButton:
 		return s.computerStartButtonSVG
 	case RestartButton:

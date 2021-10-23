@@ -25,6 +25,11 @@ const (
 	PLAYER_O_WON PlayStatus = "Player o won"
 )
 
+type Cell struct {
+	row    int
+	column int
+}
+
 type Board [][]Element
 
 type boardRepo struct {
@@ -33,6 +38,7 @@ type boardRepo struct {
 	columnSize   int
 	totalMoves   int
 	playStaus    PlayStatus
+	wonCells     []Cell
 	randomizer   *rand.Rand
 }
 
@@ -51,8 +57,9 @@ type BoardManger interface {
 	IsGameFinished() bool
 	PlayComputerMove()
 	GetGamePlayStatus() PlayStatus
+	IsCellSelectedByWinner(row int, column int) bool
 	isWonBy(row int, column int, element Element) bool
-	findGamPlayeStatus(rowIndex int, columnIndex int, element Element) PlayStatus
+	findGamePlayStatus(rowIndex int, columnIndex int, element Element) (PlayStatus, []Cell)
 	PrintBoard()
 	getEmptyCellIndexes() []Element
 	getFlatIndexFromRowAndColumn() int
@@ -66,6 +73,7 @@ func New(rowSize int, columnSize int) *boardRepo {
 		columnSize:   columnSize,
 		totalMoves:   0,
 		playStaus:    YET_TO_START,
+		wonCells:     []Cell{},
 		randomizer:   rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
@@ -90,12 +98,27 @@ func (b *boardRepo) ResetBoard() {
 	b.boardContent = getEmptyBoard(b.rowSize, b.columnSize)
 	b.totalMoves = 0
 	b.playStaus = YET_TO_START
+	b.wonCells = []Cell{}
 }
 
 func (b *boardRepo) Mark(row int, column int, element Element) {
 	b.boardContent[row][column] = element
 	b.totalMoves++
-	b.playStaus = b.findGamPlayeStatus(row, column, element)
+
+	playStaus, wonCells := b.findGamePlayStatus(row, column, element)
+	b.playStaus = playStaus
+	if playStaus == PLAYER_X_WON || playStaus == PLAYER_O_WON {
+		b.wonCells = wonCells
+	}
+}
+
+func (b boardRepo) IsCellSelectedByWinner(row int, column int) bool {
+	for _, cell := range b.wonCells {
+		if row == cell.row && column == cell.column {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *boardRepo) GetGamePlayStatus() PlayStatus {
@@ -176,58 +199,66 @@ func (b boardRepo) PrintBoard() {
 	}
 }
 
-func (b boardRepo) findGamPlayeStatus(rowIndex int, columnIndex int, element Element) PlayStatus {
+func (b boardRepo) findGamePlayStatus(rowIndex int, columnIndex int, element Element) (PlayStatus, []Cell) {
 
 	//Check vertical
+	var selectedCells []Cell = make([]Cell, b.rowSize)
 	for i := 0; i < b.rowSize; i++ {
 		if b.GetCell(i, columnIndex) != element {
 			break
 		}
+		selectedCells[i] = Cell{row: i, column: columnIndex}
 		if i == b.rowSize-1 {
-			return elementToPlayStatus(element)
+			return elementToPlayStatus(element), selectedCells
 		}
 	}
 
 	//Check horizontal
+	selectedCells = make([]Cell, b.columnSize)
 	for i := 0; i < b.columnSize; i++ {
 		if b.GetCell(rowIndex, i) != element {
 			break
 		}
+		selectedCells[i] = Cell{row: rowIndex, column: i}
 		if i == b.columnSize-1 {
-			return elementToPlayStatus(element)
+			return elementToPlayStatus(element), selectedCells
 		}
 	}
 
 	//Check dignoal (left to right)
+	selectedCells = make([]Cell, b.rowSize)
 	if rowIndex == columnIndex {
 		for i := 0; i < b.rowSize; i++ {
 			if b.GetCell(i, i) != element {
 				break
 			}
+			selectedCells[i] = Cell{row: i, column: i}
 			if i == b.rowSize-1 {
-				return elementToPlayStatus(element)
+				return elementToPlayStatus(element), selectedCells
 			}
 		}
 	}
 
 	//Check dignoal (right to left)
+	selectedCells = make([]Cell, b.rowSize)
 	if rowIndex+columnIndex == b.rowSize-1 {
-		for r := 0; r < b.rowSize; r++ {
-			c := b.rowSize - 1 - r
-			if b.GetCell(r, c) != element {
+		for i := 0; i < b.rowSize; i++ {
+			c := b.rowSize - 1 - i
+			if b.GetCell(i, c) != element {
 				break
 			}
-			if r == b.rowSize-1 {
-				return elementToPlayStatus(element)
+			selectedCells[i] = Cell{row: i, column: c}
+			if i == b.rowSize-1 {
+				return elementToPlayStatus(element), selectedCells
 			}
 		}
 	}
 
 	if b.totalMoves == b.GetBoardSize() {
-		return DRAW
+		return DRAW, []Cell{}
 	}
 
-	return PLAYING
+	return PLAYING, []Cell{}
 }
 
 func elementToPlayStatus(element Element) PlayStatus {
