@@ -32,7 +32,7 @@ type BoardManger interface {
 	IsEmptyCell(row int, column int) bool
 	GetBoard() Board
 	ResetBoard()
-	Move(row int, column int, element Element)
+	Mark(row int, column int, element Element)
 	IsGameStarted() bool
 	PlayComputerMove()
 	PrintBoard()
@@ -72,7 +72,7 @@ func (b *boardRepo) ResetBoard() {
 	b.totalMoves = 0
 }
 
-func (b *boardRepo) Move(row int, column int, element Element) {
+func (b *boardRepo) Mark(row int, column int, element Element) {
 	b.boardContent[row][column] = element
 	b.totalMoves++
 }
@@ -100,7 +100,7 @@ func (b boardRepo) PlayComputerMove(element Element) (int, int) {
 	indexToSelect := b.randomizer.Intn(availableSpaces)
 
 	rowIndex, colIndex := b.GetRowAndColumnFromFlatIndex(emptyCellIndexs[indexToSelect])
-	b.Move(rowIndex, colIndex, element)
+	b.Mark(rowIndex, colIndex, element)
 	return rowIndex, colIndex
 }
 

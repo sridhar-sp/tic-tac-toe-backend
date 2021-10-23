@@ -160,7 +160,7 @@ func onClickCell(responseWriter http.ResponseWriter, req *http.Request) {
 
 	rowIndex, colIndex := boardManager.GetRowAndColumnFromFlatIndex(cellIndex)
 	if boardManager.IsEmptyCell(rowIndex, colIndex) {
-		boardManager.Move(rowIndex, colIndex, board.CROSS_CELL)
+		boardManager.Mark(rowIndex, colIndex, board.CROSS_CELL)
 		computerMoveRowIndex, computerMoveColIndex := boardManager.PlayComputerMove(board.NOUGHT_CELL)
 
 		// updateActivities(fmt.Sprintf("* Player 'X' clicked cell [%d , %d]", rowIndex, colIndex))
@@ -191,6 +191,7 @@ func onPlayControlClick(responseWriter http.ResponseWriter, req *http.Request) {
 	if boardManager.IsGameStarted() {
 		log.Println("Reset the board")
 		boardManager.ResetBoard()
+		clearActivities()
 	} else {
 		log.Println("Computer making a move")
 		computerMoveRowIndex, computerMoveColIndex := boardManager.PlayComputerMove(board.NOUGHT_CELL)
