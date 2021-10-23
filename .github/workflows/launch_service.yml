@@ -1,0 +1,43 @@
+# I'm using heroku for hosting this go application.
+# Since I'm running on a free-tire mode heroku will shutdown the app after some amount of inactivity. 
+# So when user try to interact with the service during that inactivity time they have to face atleaset one or two failures before proceeding, which will cause bad experience.
+# Hence created this action to invoke my backend every 15 minute to keep the service alive.
+
+name: KickOffService
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow every 15 minute
+  schedule:
+    - cron: "*/15 * * * *"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  invoke_backend_server:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    env:
+      SERVICE_URL: ${{ secrets.SERVICE_URL }}
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Invoke backend
+        run: |
+          echo "Begin launch service"
+          num_of_hit=1;
+          while [ $num_of_hit -le 5 ]; do
+            http_status=$(curl -o /dev/null -s -w "%{http_code}" ${{env.SERVICE_URL}})
+            if [ "$http_status" = 200 ]; then
+                echo "Success hit_index = $num_of_hit"
+                break;
+            else
+                echo "Failure hit_count = $num_of_hit"
+            fi
+            ((num_of_hit++));
+            echo "wait for 5 seconds before invoking the server again."
+            sleep 5
+          done
+          echo "End launch service." 
