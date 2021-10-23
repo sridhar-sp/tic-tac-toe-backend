@@ -58,10 +58,10 @@ func getPort() string {
 
 func writeTextResponseAsImage(textLines []string, responseWriter http.ResponseWriter) {
 	responseWriter.Header().Set("Content-Type", "image/svg+xml")
-	drawTextLines(textLines, 18, 8, "#58A6FF", "start", responseWriter)
+	drawTextLines(textLines, 18, 8, "#C9D1D9", "#58A6FF", "start", responseWriter)
 }
 
-func drawTextLines(textLines []string, fontSize int, lineSpace int, textColor string, textAlign string, writer io.Writer) {
+func drawTextLines(textLines []string, fontSize int, lineSpace int, textColor string, lastRecentTextColor string, textAlign string, writer io.Writer) {
 	var longestTextLength = -1
 	for _, text := range textLines {
 		currentTextLength := len(text)
@@ -87,10 +87,18 @@ func drawTextLines(textLines []string, fontSize int, lineSpace int, textColor st
 		textStartX = width
 	}
 
-	style := fmt.Sprintf("font-size:%dpx;fill:%s;text-anchor:%s", fontSize, textColor, textAlign)
-	var textStartY = fontSize - (fontSize / 5)
-	for _, text := range textLines {
-		canvas.Text(textStartX, textStartY, text, style)
+	oldTextStyle := fmt.Sprintf("font-size:%dpx;fill:%s;text-anchor:%s", fontSize, textColor, textAlign)
+	lastRecentTextStyle := fmt.Sprintf("font-size:%dpx;fill:%s;text-anchor:%s", fontSize, lastRecentTextColor, textAlign)
+
+	lastIndex := len(textLines) - 1
+	var textStartY = fontSize
+	for index, text := range textLines {
+		if index == lastIndex {
+			canvas.Text(textStartX, textStartY, text, lastRecentTextStyle)
+		} else {
+			canvas.Text(textStartX, textStartY, text, oldTextStyle)
+		}
+
 		textStartY = textStartY + fontSize + lineSpace
 	}
 
