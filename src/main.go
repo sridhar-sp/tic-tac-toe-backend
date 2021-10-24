@@ -198,7 +198,7 @@ func onClickCell(responseWriter http.ResponseWriter, req *http.Request) {
 			updateActivities(fmt.Sprintf("* Player 'X' can't select cell [%d , %d], the cell is already selected", rowIndex, colIndex))
 		}
 	} else {
-		updateActivities("* Game over. Please restart to play the game again")
+		updateActivities("* Game over. Please click 'restart' to play the game again")
 	}
 
 	http.Redirect(responseWriter, req, REDIRECT_URL, http.StatusMovedPermanently)
