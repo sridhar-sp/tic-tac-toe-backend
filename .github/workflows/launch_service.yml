@@ -7,7 +7,7 @@ name: KickOffService
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow every 15 minute
+  # Triggers the workflow every 30 minute
   schedule:
     - cron: "*/30 * * * *"
 
