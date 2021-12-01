@@ -7,9 +7,9 @@ name: KickOffService
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow every 30 minute
+  # Triggers the workflow every 60 minute
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/60 * * * *"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
