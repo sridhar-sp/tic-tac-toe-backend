@@ -16,7 +16,7 @@ Whenever I add an image link to the Github readme file it’s always getting rep
 
 I wondered why it was happening like that. I mean, it’s okay to proxy an external url, but why are even static images placed in repositories getting a proxy url when they're referenced from a readme file? What is Github trying to achieve here?
 
-Then I thought what would happen if there was no proxy server involved while serving the images. If there is no proxy, then the http request to fetch the image will directly come to our server and we can read the http request and try to get a user ip address, which can be used for any tracking purposes and Github will have no control over it.
+Then I thought what would happen if there was no proxy server involved while serving the images. If there is no proxy, then the http request to fetch the image will directly come to our server(where we host the image) and we can read the http request and try to get a user ip address, which can be used for any tracking purposes and Github will have no control over it.
 
 So I kind of understood the reason behind why Github added the image proxy server. At this stage, I wanted to know whether it’s possible to get any unique identification from the http request made from the user machine.
 
