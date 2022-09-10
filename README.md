@@ -24,7 +24,7 @@ I hoped there would be a way to uniquely identify each session/machine. So I tho
 
 After I started the development, I quickly found out there was no way we could get a unique id from the http request fired from the readme markdown file. This is because each time a request comes from a random proxy server, and on top of that, cookies are not allowed either. So, without a unique id, there won’t be any states saved for each player, and individual game play is impossible. Therefore, a single game play will be shared with the entire internet.
 
-At this stage, I thought of abandoning the quest, but playing a game from the Github Readme.md file itself seems like a cool idea, even when the gameplay is shared with the entire internet. So I ran this idea by my friends, and they seemed interested in seeing how this would turn out, so I thought of investing some time in developing this.
+At this stage, I thought of abandoning the quest, but playing a game from the Github README.md file itself seems like a cool idea, even when the gameplay is shared with the entire internet. So I ran this idea by my friends, and they seemed interested in seeing how this would turn out, so I thought of investing some time in developing this.
 
 
 
