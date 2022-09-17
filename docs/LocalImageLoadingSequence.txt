@@ -1,0 +1,17 @@
+Title: Local image loading sequence from Github markdown file
+
+participant User
+participant Github as Github
+participant Camo (Image proxy) as Camo
+
+Note right of User: The user opens a markdown file.
+User-->Github: Request:\nlocalImageFile.png
+Note right of Github: Securely load the image.
+Github-->Camo: Load:\nhttps://camo.githubusercontent.com/hash
+Camo-->Github: Get:\nlocalImageFile.png
+Github->>Camo: Return:\nlocalImageFile.png
+Note right of Github: Proxy media content from Github.
+Camo->>User: \n\nResponse:\nlocalImageFile.png\n(https://camo.githubusercontent.com/hash)
+Note right of User: Markdown file rendering is finished.
+
+

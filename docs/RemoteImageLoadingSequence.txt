@@ -1,0 +1,18 @@
+Title: Remote image loading sequence from Github markdown file
+
+participant User
+participant Github as Github
+participant Camo (Image proxy) as Camo
+participant Remote Server as Remote
+
+Note right of User: The user opens a markdown file.
+User-->Github: Request:\nremoteImage.png
+Note right of Github: Securely load the image.
+Github-->Camo: Load:\nhttps://camo.githubusercontent.com/hash
+Camo-->Remote: Get:\nremoteImage.png
+Remote->>Camo: Return:\nremoteImage.png
+Note right of Camo: Proxy media content\nfrom remote server.
+Camo->>User: \n\nResponse:\nremoteImage.png\n(https://camo.githubusercontent.com/hash)
+Note right of User: Markdown file rendering is finished.
+
+
