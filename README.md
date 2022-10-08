@@ -10,6 +10,10 @@ Checkout: https://github.com/sridhar-sp/tic-tac-toe
 
 This is a learning attempt to see how interactive we can make the Github readme.md file.
 
+Checkout the [medium article](https://betterprogramming.pub/play-tic-tac-toe-from-github-readme-md-file-754539603380)
+
+
+
 # Backstory
 
 Whenever I add an image link to the Github readme file it’s always getting replaced with ‘https://camo.githubusercontent.com/some-hash’ proxy url.
