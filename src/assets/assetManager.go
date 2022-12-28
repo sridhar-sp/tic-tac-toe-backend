@@ -35,13 +35,13 @@ type SvgImages interface {
 func New() svgImageAssets {
 	log.Println("Caching all the required asset files")
 	return svgImageAssets{
-		emptyBoxSVG:            fileToBytes("./assets/rect_empty.svg"),
-		crossImageSVG:          fileToBytes("./assets/rect_x.svg"),
-		selectedCrossImageSVG:  fileToBytes("./assets/rect_x_selected.svg"),
-		noughtImageSVG:         fileToBytes("./assets/rect_o.svg"),
-		selectedNoughtImageSVG: fileToBytes("./assets/rect_o_selected.svg"),
-		computerStartButtonSVG: fileToBytes("./assets/computer_start_button.svg"),
-		restartButtonSVG:       fileToBytes("./assets/restart_button.svg"),
+		emptyBoxSVG:            fileToBytes("../assets/rect_empty.svg"),
+		crossImageSVG:          fileToBytes("../assets/rect_x.svg"),
+		selectedCrossImageSVG:  fileToBytes("../assets/rect_x_selected.svg"),
+		noughtImageSVG:         fileToBytes("../assets/rect_o.svg"),
+		selectedNoughtImageSVG: fileToBytes("../assets/rect_o_selected.svg"),
+		computerStartButtonSVG: fileToBytes("../assets/computer_start_button.svg"),
+		restartButtonSVG:       fileToBytes("../assets/restart_button.svg"),
 	}
 }
 
@@ -72,6 +72,7 @@ func fileToBytes(filePath string) []byte {
 	bytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		log.Println("Error parsing ", filePath)
+		log.Println(err)
 		return make([]byte, 0)
 	}
 	return bytes
